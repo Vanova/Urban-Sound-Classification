@@ -66,7 +66,7 @@ W = tf.Variable(tf.random_normal([n_hidden_units_two, n_classes], mean=0, stddev
 b = tf.Variable(tf.random_normal([n_classes], mean=0, stddev=sd))
 y_ = tf.nn.softmax(tf.matmul(h_2, W) + b)
 
-init = tf.initialize_all_variables()
+init = tf.global_variables_initializer()
 
 # Xentropy cost function
 cost_function = tf.reduce_mean(-tf.reduce_sum(Y * tf.log(y_), reduction_indices=[1]))
