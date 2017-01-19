@@ -18,6 +18,7 @@ def extract_feature(file_name):
 
 def parse_audio_files(parent_dir, sub_dirs, file_ext='*.wav'):
     features, labels = np.empty((0, 193)), np.empty(0)
+    counter = 0
     for label, sub_dir in enumerate(sub_dirs):
         for fn in glob.glob(os.path.join(parent_dir, sub_dir, file_ext)):
             try:
@@ -25,9 +26,12 @@ def parse_audio_files(parent_dir, sub_dirs, file_ext='*.wav'):
                 ext_features = np.hstack([mfccs, chroma, mel, contrast, tonnetz])
                 features = np.vstack([features, ext_features])
                 labels = np.append(labels, fn.split('/')[-1].split('-')[1])
+                counter += 1
+                print("{} processed".format(fn))
             except Exception:
                 print("Bad file {}".format(fn))
                 pass
+        print("Files processed from {}: {}".format(sub_dir, counter))
     return np.array(features), np.array(labels, dtype=np.int)
 
 

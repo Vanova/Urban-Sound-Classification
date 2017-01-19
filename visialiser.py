@@ -16,14 +16,10 @@ plt.rcParams['ytick.labelsize'] = 10
 plt.rcParams['legend.fontsize'] = 11
 plt.rcParams['figure.titlesize'] = 13
 
-import soundfile as sf
-
-
 def load_sound_files(file_paths):
     raw_sounds = []
     for fp in file_paths:
-        # X, sr = sf.read("./data/7061-6-0-0.wav", dtype=np.float32)
-        X, sr = librosa.load(fp, sr=22050) # "./data/7061-6-0-0.wav" "./data/197318-6-6-0.wav"
+        X, sr = librosa.load(fp, sr=22050)
         raw_sounds.append(X)
     return raw_sounds
 
