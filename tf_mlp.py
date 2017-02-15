@@ -2,12 +2,13 @@
 Try out multi-tagging detection (DCASE challenge) based on
 the Urban Sound Classification
 """
-import visialiser as vis
-import urban_loader
+import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
-import matplotlib.pyplot as plt
 from sklearn.metrics import precision_recall_fscore_support
+
+import utils.visialiser as vis
+from utils import urban_loader
 
 DATASET_BASE_PATH = '/home/vano/wrkdir/Datasets/UrbanSound8K/audio/'
 
@@ -95,5 +96,6 @@ plt.xlabel("Iterations")
 plt.axis([0, training_epochs, 0, np.max(cost_history)])
 plt.show()
 
+# evaluation
 p, r, f, s = precision_recall_fscore_support(y_true, y_pred, average='micro')
 print "F-Score:", round(f, 3)
