@@ -36,13 +36,18 @@ def parse_audio_files(parent_dir, sub_dirs, file_ext='*.wav'):
 
 
 def extract_fbank_feat(parent_dir, sub_dirs, file_ext="*.wav", bands=60, frames=41):
+    """
+    :return: 3D array (features) and 1D array (labels);
+    feature shape [band; frames; channel]
+    """
     window_size = 512 * (frames - 1)
     log_specgrams = []
     labels = []
     for l, sub_dir in enumerate(sub_dirs):
+        print("Processing: %s" % l)
         for fn in glob.glob(os.path.join(parent_dir, sub_dir, file_ext)):
+            print(fn)
             sound_clip, s = librosa.load(fn)
-            # label = fn.split('/')[2].split('-')[1]
             label = fn.split('/')[-1].split('-')[1]
             for (start, end) in windows(sound_clip, window_size):
                 if (len(sound_clip[start:end]) == window_size):
@@ -53,7 +58,8 @@ def extract_fbank_feat(parent_dir, sub_dirs, file_ext="*.wav", bands=60, frames=
                     log_specgrams.append(logspec)
                     labels.append(label)
 
-    log_specgrams = np.asarray(log_specgrams).reshape(len(log_specgrams), bands, frames, 1)
+    log_specgrams = np.asarray(log_specgrams).\
+        reshape(len(log_specgrams), bands, frames, 1)
     features = np.concatenate((log_specgrams, np.zeros(np.shape(log_specgrams))), axis=3)
     for i in range(len(features)):
         features[i, :, :, 1] = librosa.feature.delta(features[i, :, :, 0])
