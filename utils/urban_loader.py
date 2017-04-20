@@ -37,8 +37,8 @@ def parse_audio_files(parent_dir, sub_dirs, file_ext='*.wav'):
 
 def extract_fbank_feat(parent_dir, sub_dirs, file_ext="*.wav", bands=60, frames=41):
     """
-    :return: 3D array (features) and 1D array (labels);
-    feature shape [band; frames; channel]
+    :return: 4D array (features) and 1D array (labels);
+    feature shape [smp; band; frames; channel]
     """
     window_size = 512 * (frames - 1)
     log_specgrams = []
@@ -58,7 +58,7 @@ def extract_fbank_feat(parent_dir, sub_dirs, file_ext="*.wav", bands=60, frames=
                     log_specgrams.append(logspec)
                     labels.append(label)
 
-    log_specgrams = np.asarray(log_specgrams).\
+    log_specgrams = np.asarray(log_specgrams). \
         reshape(len(log_specgrams), bands, frames, 1)
     features = np.concatenate((log_specgrams, np.zeros(np.shape(log_specgrams))), axis=3)
     for i in range(len(features)):
@@ -67,18 +67,58 @@ def extract_fbank_feat(parent_dir, sub_dirs, file_ext="*.wav", bands=60, frames=
     return np.array(features), np.array(labels, dtype=np.int)
 
 
+def extract_mfcc_features(parent_dir, sub_dirs, file_ext="*.wav", bands=20, frames=41):
+    """
+    :return: 3D array (features) and 1D array (labels);
+    feature shape [smp; band; frames]
+    """
+    window_size = 512 * (frames - 1)
+    mfccs = []
+    labels = []
+    for l, sub_dir in enumerate(sub_dirs):
+        print("Processing: %s" % l)
+        for fn in glob.glob(os.path.join(parent_dir, sub_dir, file_ext)):
+            print("%s" % fn)
+            sound_clip, s = librosa.load(fn)
+            label = fn.split('/')[-1].split('-')[1]
+            for (start, end) in windows(sound_clip, window_size):
+                if (len(sound_clip[start:end]) == window_size):
+                    signal = sound_clip[start:end]
+                    mfcc = librosa.feature.mfcc(y=signal, sr=s, n_mfcc=bands).T.flatten()[:, np.newaxis].T
+                    mfccs.append(mfcc)
+                    labels.append(label)
+    features = np.asarray(mfccs).reshape(len(mfccs), bands, frames)
+    return np.array(features), np.array(labels, dtype=np.int)
+
+
 def windows(data, window_size):
     """
     Return chunk of sound wave signal
     data: 1D array wave signal
     window_size: wave chunk length
-    :return:
     """
     start = 0
     while start < len(data):
         yield start, start + window_size
         start += (window_size / 2)
 
+
+
+# class BatchGenerator(object):
+#     def __init__(self):
+#         pass
+#
+#
+# class Dataset(object):
+#     """
+#     Load data from hdf5 format
+#     """
+#     def __init__(self):
+#         pass
+#
+#
+# def feature_extractor():
+#     pass
 
 def one_hot_encode(labels):
     n_labels = len(labels)
