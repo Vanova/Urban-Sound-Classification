@@ -9,6 +9,7 @@ import tensorflow as tf
 import numpy as np
 import utils.urban_loader as urb_load
 import utils.nnet_lib as NL
+import config as cnfg
 
 plt.style.use('ggplot')
 
@@ -24,22 +25,27 @@ n_steps = 100
 n_hidden = 100
 n_classes = 10
 
+# TODO:
+# extract features
+# save to hdf5
+# train / test
+# my feature extraction
+# urb_load.my_feature_extraction(cnfg.DATASET_BASE_PATH, cnfg.TR_SUB_DIRS, feat_name='train_set.h5')
+# urb_load.my_feature_extraction(cnfg.DATASET_BASE_PATH, cnfg.TST_SUB_DIRS, feat_name='test_set.h5')
+#######################
 
-# parent_dir = 'Sound-Data'
-DATASET_BASE_PATH = '/home/vano/wrkdir/datasets/UrbanSound8K/audio/'
-
-tr_sub_dirs = ['fold1_dwnsmp', 'fold2_dwnsmp']
-X_train, Y_train = urb_load.extract_mfcc_features(DATASET_BASE_PATH, tr_sub_dirs, frames=n_steps, bands=n_input)
+X_train, Y_train = urb_load.extract_mfcc_features(cnfg.DATASET_BASE_PATH, cnfg.TR_SUB_DIRS,
+                                                  frames=n_steps, bands=n_input)
 X_train = np.transpose(X_train, (0, 2, 1))
 Y_train = urb_load.one_hot_encode(Y_train)
 
-ts_sub_dirs = ['fold3_dwnsmp']
-X_test, Y_test = urb_load.extract_mfcc_features(DATASET_BASE_PATH, ts_sub_dirs, frames=n_steps, bands=n_input)
+X_test, Y_test = urb_load.extract_mfcc_features(cnfg.DATASET_BASE_PATH, cnfg.TST_SUB_DIRS,
+                                                frames=n_steps, bands=n_input)
 X_test = np.transpose(X_test, (0, 2, 1))
 Y_test = urb_load.one_hot_encode(Y_test)
 
 # define network
-x = tf.placeholder("float", [None, n_steps, n_input]) # TODO check dim!!!
+x = tf.placeholder("float", [None, n_steps, n_input])
 y = tf.placeholder("float", [None, n_classes])
 
 weight = tf.Variable(tf.random_normal([n_hidden, n_classes]))

@@ -4,8 +4,22 @@ from scipy import signal
 from pywt import wavedec
 import librosa
 
-# TODO fix according to factory pattern: https://krzysztofzuraw.com/blog/2016/factory-pattern-python.html
+MFCC_CNF = {
+    'include_mfcc0': False,
+    'include_delta': False,
+    'include_acceleration': False,
+    'window': 'hamming_asymmetric',  # [hann_asymmetric, hamming_asymmetric]
+    'n_mfcc': 14,  # Number of MFCC coefficients
+    'n_mels': 40,  # Number of MEL bands used
+    'n_fft': 1024,  # FFT length
+    'fmin': 0,  # Minimum frequency when constructing MEL bands
+    'fmax': 8000,  # def: 24000     # Maximum frequency when constructing MEL band
+    'mfcc_delta': {'width': 9},
+    'mfcc_acceleration': {'width': 9}
+}
 
+
+# TODO fix according to factory pattern: https://krzysztofzuraw.com/blog/2016/factory-pattern-python.html
 def prepare_extractor(feats='mfcc', params=None):
     if feats == 'mfcc':
         return MFCCBaseExtractor(params)
@@ -19,8 +33,6 @@ def prepare_extractor(feats='mfcc', params=None):
         return CWTBaseExtractor(params)
     elif feats == 'dwt':
         return DWTBaseExtractor(params)
-    elif feats == 'raw_signal':
-        return RawSignalBaseExtractor(params)
     else:
         raise ValueError("Unknown feature type [" + feats + "]")
 
@@ -51,7 +63,7 @@ class BaseExtractor(object):
         """
         Chunk the sequence x with 50% overlapping
         """
-        for index in xrange(0, len(x) - wnd + 1, wnd//2):
+        for index in xrange(0, len(x) - wnd + 1, wnd // 2):
             yield x[index:index + wnd]
 
 
@@ -205,11 +217,3 @@ class DWTBaseExtractor(BaseExtractor):
         # db = 10.0 * np.log10(np.maximum(1e-10, amp))
         edwt_dat = np.expand_dims(dwt_dat, axis=2)
         return edwt_dat
-
-
-class RawSignalBaseExtractor(BaseExtractor):
-    def __init__(self, params=None):
-        pass
-
-    def extract(self, x, smp_rate):
-        pass
