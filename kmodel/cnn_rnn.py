@@ -7,18 +7,14 @@
 
 '''
 from keras import backend as K
-from keras.layers import Input, Dense
 from keras.models import Model
-from keras.layers import Dense, Dropout, Reshape, Permute
+from keras.layers import Dense, Dropout, Reshape, Permute, Input
+from keras.optimizers import Adam, SGD
 from keras.layers.convolutional import Convolution2D
 from keras.layers.convolutional import MaxPooling2D, ZeroPadding2D
 from keras.layers.normalization import BatchNormalization
 from keras.layers.advanced_activations import ELU
 from keras.layers.recurrent import GRU
-from keras.utils.data_utils import get_file
-
-# TH_WEIGHTS_PATH = 'https://github.com/keunwoochoi/music-auto_tagging-keras/blob/master/data/music_tagger_crnn_weights_theano.h5'
-# TF_WEIGHTS_PATH = 'https://github.com/keunwoochoi/music-auto_tagging-keras/blob/master/data/music_tagger_crnn_weights_tensorflow.h5'
 
 
 def MusicTaggerCRNN(weights='msd', input_tensor=None,
@@ -141,7 +137,7 @@ def MusicTaggerCRNN(weights='msd', input_tensor=None,
         return model
 
 
-def audio_crnn(params, input_shape, include_top=True):
+def audio_crnn(params, input_shape, nclass, include_top=True):
     """
     The CNN dim equation: (width - kernel_size + 2*pad)/stride +1
     input shape: [batch_sz; band; frame_wnd; channel]
@@ -149,22 +145,24 @@ def audio_crnn(params, input_shape, include_top=True):
     """
     # determine proper input shape
     print("DNN input shape", input_shape)
-    if K.image_dim_ordering() == 'th': # TODO check for tensorflow
+    if K.image_dim_ordering() == 'th':
         channel_axis = 1
         freq_axis = 2
         # time_axis = 3
         batch_sz, channels, bands, frames = input_shape
         assert channels >= 1
+        nn_shape = (channels, bands, frames)
     else:
-        channel_axis = 3
+        channel_axis = 3 # TODO check for theano
         freq_axis = 1
         # time_axis = 2
         batch_sz, bands, frames, channels = input_shape
         assert channels >= 1
+        nn_shape = (bands, frames, channels)
 
     # TODO NOTE: we do 3 convolutions for DCASE
     # Input block
-    feat_input = Input(shape=input_shape)
+    feat_input = Input(shape=nn_shape)
     # x = ZeroPadding2D(padding=(0, 37))(feat_input) # TODO check?
     x = BatchNormalization(axis=freq_axis, name='bn_0_freq')(feat_input)
 
@@ -172,41 +170,44 @@ def audio_crnn(params, input_shape, include_top=True):
     x = Convolution2D(64, 3, 3, border_mode='same', name='conv1')(x)
     x = BatchNormalization(axis=channel_axis, mode=0, name='bn1')(x)
     x = ELU()(x)
-    x = MaxPooling2D(pool_size=(2, 2), strides=(2, 2), name='pool1')(x)
+    x = MaxPooling2D(pool_size=(2, 2), strides=(2, 2), name='pool1')(x) # (20, 50, 64)
     x = Dropout(0.1, name='dropout1')(x)
 
     # Conv block 2
     x = Convolution2D(128, 3, 3, border_mode='same', name='conv2')(x)
     x = BatchNormalization(axis=channel_axis, mode=0, name='bn2')(x)
     x = ELU()(x)
-    x = MaxPooling2D(pool_size=(3, 3), strides=(3, 3), name='pool2')(x)
+    x = MaxPooling2D(pool_size=(3, 2), strides=(3, 2), name='pool2')(x)
     x = Dropout(0.1, name='dropout2')(x)
 
     # Conv block 3
     x = Convolution2D(128, 3, 3, border_mode='same', name='conv3')(x)
     x = BatchNormalization(axis=channel_axis, mode=0, name='bn3')(x)
     x = ELU()(x)
-    x = MaxPooling2D(pool_size=(4, 4), strides=(4, 4), name='pool3')(x)
+    x = MaxPooling2D(pool_size=(4, 2), strides=(4, 2), name='pool3')(x)
     x = Dropout(0.1, name='dropout3')(x)
 
     # Conv block 4
     x = Convolution2D(128, 3, 3, border_mode='same', name='conv4')(x)
     x = BatchNormalization(axis=channel_axis, mode=0, name='bn4')(x)
     x = ELU()(x)
-    x = MaxPooling2D(pool_size=(4, 4), strides=(4, 4), name='pool4')(x)
+    x = MaxPooling2D(pool_size=(2, 1), strides=(2, 1), name='pool4')(x)
     x = Dropout(0.1, name='dropout4')(x)
 
     # reshaping
     if K.image_dim_ordering() == 'th':
         x = Permute((3, 1, 2))(x)
-    x = Reshape((15, 128))(x)
+    # do convolutions, until all freqs shrink to one
+    # x = Reshape((-1, 128))(x) # TODO check
+    x = Reshape((10, 128))(x)
+
 
     # GRU block 1, 2, output
-    x = GRU(32, return_sequences=True, name='gru1')(x)
+    # x = GRU(32, return_sequences=True, name='gru1')(x)
     x = GRU(32, return_sequences=False, name='gru2')(x)
     x = Dropout(0.3)(x)
     if include_top:
-        x = Dense(50, activation='sigmoid', name='output')(x)
+        x = Dense(nclass, activation='sigmoid', name='output')(x)
     # Create model
     model = Model(feat_input, x)
     # ===
@@ -225,6 +226,6 @@ def audio_crnn(params, input_shape, include_top=True):
 
     model.compile(loss=loss,
                   optimizer=optimizer,
-                  metrics=['fmeasure'])
+                  metrics=['accuracy'])
     model.summary()
     return model

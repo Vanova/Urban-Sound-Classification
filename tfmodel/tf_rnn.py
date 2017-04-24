@@ -67,19 +67,19 @@ init = tf.global_variables_initializer()
 with tf.Session() as session:
     session.run(init)
 
-    for epoch in xrange(training_iters):
-        print("Iter: %s" % epoch)
-        offset = (epoch * batch_size) % (Y_train.shape[0] - batch_size)
+    for iter in xrange(training_iters):
+        print("Iter: %s" % iter)
+        offset = (iter * batch_size) % (Y_train.shape[0] - batch_size)
         batch_x = X_train[offset:(offset + batch_size), :, :]
         batch_y = Y_train[offset:(offset + batch_size), :]
         _, c = session.run([optimizer, loss_f], feed_dict={x: batch_x, y: batch_y})
 
-        if epoch % display_step == 0:
+        if iter % display_step == 0:
             # Calculate batch accuracy
             acc = session.run(accuracy, feed_dict={x: X_test, y: Y_test})
             # Calculate batch loss
             loss = session.run(loss_f, feed_dict={x: X_test, y: Y_test})
-            print "Iter " + str(epoch) + ", Minibatch Loss= " + \
+            print "Iter " + str(iter) + ", Minibatch Loss= " + \
                   "{:.6f}".format(loss) + ", Test Accuracy= " + \
                   "{:.5f}".format(acc)
 
