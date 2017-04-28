@@ -8,6 +8,7 @@ import config as cnfg
 from kmodel import cnn_rnn
 
 plt.style.use('ggplot')
+np.random.seed(777)
 
 # Network Parameters
 learning_rate = 0.001
@@ -23,7 +24,7 @@ n_classes = 10
 # TODO:
 # -extract features
 # -save to hdf5
-# -train / test
+# - fit_generator + tensorboard
 # my feature extraction
 # urb_load.my_feature_extraction(cnfg.DATASET_BASE_PATH, cnfg.TR_SUB_DIRS, feat_name='train_set.h5')
 # urb_load.my_feature_extraction(cnfg.DATASET_BASE_PATH, cnfg.TST_SUB_DIRS, feat_name='test_set.h5')
@@ -38,8 +39,7 @@ X_test, Y_test = urb_load.extract_mfcc_features(cnfg.DATASET_BASE_PATH, cnfg.TST
 Y_test = urb_load.one_hot_encode(Y_test)
 
 params = {'loss': 'mse', 'optimizer': 'adam', 'learn_rate': learning_rate}
-# input_shape = (batch_size, X_train.shape[1], X_train.shape[2], X_train.shape[3])
-input_shape = (50, 64, 80, 1)
+input_shape = (batch_size, X_train.shape[1], X_train.shape[2], X_train.shape[3])
 model = cnn_rnn.audio_crnn(params, nclass=n_classes, input_shape=input_shape)
 
 # train model
@@ -61,3 +61,5 @@ for iter in xrange(training_iters):
 v = model.evaluate(X_test, Y_test)
 print('Test loss: ', round(v[0]), 3)
 print('Test accuracy: ', round(v[1]), 3)
+model.save("crnn_%0.2f.pkl" % v[1])
+# 46,69 best

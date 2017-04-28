@@ -1,10 +1,5 @@
-# -*- coding: utf-8 -*-
-'''MusicTaggerCRNN model for Keras.
-
-# Reference:
-
-- [Music-auto_tagging-keras](https://github.com/keunwoochoi/music-auto_tagging-keras)
-
+'''
+Reference: [Music-auto_tagging-keras](https://github.com/keunwoochoi/music-auto_tagging-keras)
 '''
 from keras import backend as K
 from keras.models import Model
@@ -15,6 +10,8 @@ from keras.layers.convolutional import MaxPooling2D, ZeroPadding2D
 from keras.layers.normalization import BatchNormalization
 from keras.layers.advanced_activations import ELU
 from keras.layers.recurrent import GRU
+import numpy as np
+np.random.seed(777)
 
 
 def MusicTaggerCRNN(weights='msd', input_tensor=None,
@@ -200,7 +197,6 @@ def audio_crnn(params, input_shape, nclass, include_top=True):
     # do convolutions, until all freqs shrink to one
     # x = Reshape((-1, 128))(x) # TODO check
     x = Reshape((10, 128))(x)
-
 
     # GRU block 1, 2, output
     # x = GRU(32, return_sequences=True, name='gru1')(x)

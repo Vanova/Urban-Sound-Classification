@@ -21,15 +21,14 @@ batch_size = 50
 display_step = 30
 
 n_input = 40
-n_steps = 100
+n_steps = 80
 n_hidden = 100
 n_classes = 10
 
 # TODO:
 # extract features
 # save to hdf5
-# train / test
-# my feature extraction
+# - my feature extraction
 # urb_load.my_feature_extraction(cnfg.DATASET_BASE_PATH, cnfg.TR_SUB_DIRS, feat_name='train_set.h5')
 # urb_load.my_feature_extraction(cnfg.DATASET_BASE_PATH, cnfg.TST_SUB_DIRS, feat_name='test_set.h5')
 #######################
