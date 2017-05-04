@@ -5,194 +5,237 @@ import numpy as np
 import keras.backend as K
 import h5py
 import features as F
+np.random.seed(777)
 
 
-# class HDFWriter(object):
-#     """
-#     Save audio features in single hdf5 file
-#     """
-#     def __init__(self, file_name):
-#         self.hdf = h5py.File(file_name, "w")
-#
-#     def append(self, file_id, tag, feat):
-#         """
-#         file_id: unique identifier of the audio file
-#         tag: hot-encoded 1D array, where '1' marks class on
-#         """
-#         data = self.hdf.create_dataset(name=file_id, data=feat)
-#         data.attrs['tag'] = tag
-#
-#     def close(self):
-#         self.hdf.close()
-#
-#     @staticmethod
-#     def load_data(file_name):
-#         """
-#         Load all datasets from hdf5 to the memory
-#         NOTE: not preferred to run for large dataset
-#         """
-#         hdf = h5py.File(file_name, "r")
-#         files = list(hdf.keys())
-#         print('Files in dataset: %d' % len(files))
-#         X, Y = [], []
-#         for fn in hdf:
-#             X.append(np.array(hdf[fn]))
-#             Y.append(hdf[fn].attrs['tag'])
-#         hdf.close()
-#         return np.array(X), np.array(Y)
-#
-#
-# def my_feature_extraction(parent_dir, sub_dirs, feat_path='./data/', feat_name='train_set.h5',
-#                                       type='mfcc', file_ext='*.wav', overwrite=True):
-#     # check_path(parent_dir)
-#     print("Feature type: %s" % type)
-#     if not any(feat_name for f in os.listdir(feat_path)) or overwrite:
-#         # prepare feature extractor
-#         extractor = F.prepare_extractor(feats=type, params=...)
-#         dump_file_name = os.path.join(feat_path, feat_name)
-#         writer = HDFWriter(file_name=dump_file_name)
-#
-#         # scan folders and sub
-#         for l, sub_dir in enumerate(sub_dirs):
-#             print("Processing: %s" % l)
-#             for fn in glob.glob(os.path.join(parent_dir, sub_dir, file_ext)):
-#                 print("%s" % fn)
-#         ############################
-#         for fn in files:
-#             if os.path.isfile(dataset.relative_to_absolute_path(fn)):
-#                 x, fs = load_audio(filename=dataset.relative_to_absolute_path(fn),
-#                                    mono=True, fs=params['fs'])
-#                 feat = extractor.extract(x, fs)
-#                 file_id = os.path.split(fn)[1]
-#                 tag = dataset.file_meta(fn)[0]['tag_string'].lower()
-#                 if tag == 's':
-#                     print("Skip sil files: %s" % file_id)
-#                     continue
-#                 # binary tag
-#                 tag_id = dnnl.tag_hot_encoding(list(tag), dataset.audio_tags)
-#                 # dump features
-#                 writer.append(file_id, tag_id, feat)
-#             else:
-#                 raise IOError("Audio file not found [%s]" % fn)
-#         writer.close()
-#         print("Files processed: %d" % len(files))
+class HDFWriter(object):
+    """
+    Save audio features in single hdf5 file storage
+    """
+    def __init__(self, file_name):
+        self.hdf = h5py.File(file_name, "w")
+
+    def append(self, file_id, tag, feat):
+        """
+        file_id: unique identifier of the audio file
+        tag: hot-encoded 1D array, where '1' marks class on
+        """
+        data = self.hdf.create_dataset(name=file_id, data=feat)
+        data.attrs['tag'] = tag
+
+    def close(self):
+        self.hdf.close()
+
+    @staticmethod
+    def load_data(file_name):
+        """
+        Load all datasets from hdf5 to the memory
+        NOTE: not preferred to run for large dataset
+        """
+        hdf = h5py.File(file_name, "r")
+        files = list(hdf.keys())
+        print('Files in dataset: %d' % len(files))
+        X, Y = [], []
+        for fn in hdf:
+            X.append(np.array(hdf[fn]))
+            Y.append(hdf[fn].attrs['tag'])
+        hdf.close()
+        return np.array(X), np.array(Y)
+
+
+# def batch_handler(type):
+#     if type == "seq_slide_wnd":
+#         pass
+#     elif type == "rnd_wnd":
+#         pass
+#     elif type == "eval":
+#         pass
+#     elif type == "mtag_oversmp":
+#         pass
+#     elif type == "stag_oversmp":
+#         pass
 #     else:
-#         print("Storage with features exist: %s" % feat_set_name)
-#
-#
-# def _exctraction_feat_list():
+#         raise ValueError("Unknown batch type [" + type + "]")
 
 
-def extract_feature(file_name):
-    X, sample_rate = librosa.load(file_name)
-    stft = np.abs(librosa.stft(X))
-    mfccs = np.mean(librosa.feature.mfcc(y=X, sr=sample_rate, n_mfcc=40).T, axis=0)
-    chroma = np.mean(librosa.feature.chroma_stft(S=stft, sr=sample_rate).T, axis=0)
-    mel = np.mean(librosa.feature.melspectrogram(X, sr=sample_rate).T, axis=0)
-    contrast = np.mean(librosa.feature.spectral_contrast(S=stft, sr=sample_rate).T, axis=0)
-    tonnetz = np.mean(librosa.feature.tonnetz(y=librosa.effects.harmonic(X), sr=sample_rate).T, axis=0)
-    return mfccs, chroma, mel, contrast, tonnetz
-
-
-def parse_audio_files(parent_dir, sub_dirs, file_ext='*.wav'):
-    features, labels = np.empty((0, 193)), np.empty(0)
-    counter = 0
-    for label, sub_dir in enumerate(sub_dirs):
-        for fn in glob.glob(os.path.join(parent_dir, sub_dir, file_ext)):
-            try:
-                mfccs, chroma, mel, contrast, tonnetz = extract_feature(fn)
-                ext_features = np.hstack([mfccs, chroma, mel, contrast, tonnetz])
-                features = np.vstack([features, ext_features])
-                labels = np.append(labels, fn.split('/')[-1].split('-')[1])
-                counter += 1
-                print("{} processed".format(fn))
-            except Exception:
-                print("Bad file {}".format(fn))
-                pass
-        print("Files processed from {}: {}".format(sub_dir, counter))
-    return np.array(features), np.array(labels, dtype=np.int)
-
-
-def extract_fbank_feat(parent_dir, sub_dirs, file_ext="*.wav", bands=60, frames=41):
+class MiniBatchGenerator(object):
     """
-    :return: 4D array (features) and 1D array (labels);
-    feature shape [smp; band; frames; channel]
+    Generate mini-batches from HDF5 data set.
+    Input: hdf5 storage of datasets with attributes as labels:
+    hdf5 datasets (2D[3D] arrays) [bands; frames; [channel]] with
+    attributes as labels (1D array)
     """
-    window_size = 512 * (frames - 1)
-    log_specgrams = []
-    labels = []
-    for l, sub_dir in enumerate(sub_dirs):
-        print("Processing: %s" % l)
-        for fn in glob.glob(os.path.join(parent_dir, sub_dir, file_ext)):
-            print(fn)
-            sound_clip, s = librosa.load(fn)
-            label = fn.split('/')[-1].split('-')[1]
-            for (start, end) in windows(sound_clip, window_size):
-                if (len(sound_clip[start:end]) == window_size):
-                    signal = sound_clip[start:end]
-                    melspec = librosa.feature.melspectrogram(signal, n_mels=bands)
-                    logspec = librosa.logamplitude(melspec)
-                    logspec = logspec.T.flatten()[:, np.newaxis].T
-                    log_specgrams.append(logspec)
-                    labels.append(label)
 
-    log_specgrams = np.asarray(log_specgrams)
-    log_specgrams = log_specgrams.reshape(len(log_specgrams), bands, frames, 1)
-    features = np.concatenate((log_specgrams, np.zeros(np.shape(log_specgrams))), axis=3)
-    for i in range(len(features)):
-        features[i, :, :, 1] = librosa.feature.delta(features[i, :, :, 0])
+    def __init__(self, file_name, window, batch_sz=1, batch_type="seq_slide_wnd", data_stat=None):
+        """
+        batch_type:
+            "seq_slide_wnd" - cut sequential chunks from the taken file
+            "rnd_wnd" - cut random chunk from the file, then choose another file
+            "mtag_oversmp" - add more rare samples, regarding multiple tags statistics 'data_stat'
+            "stag_oversmp" - add more rare samples, regarding single tags statistics 'data_stat'
+            "eval" - slice one file and return samples to do evaluation
+        data_stat: {'train':{
+                        tags1:[file_id1, file_id2, file_id3, ...]
+                        tags2:[file_id5, file_id6, file_id10, ...]
+                        ...}
+                    'test':{
+                        tags1:[file_id1, file_id2, file_id3, ...]
+                        tags2:[file_id5, file_id1, file_id3, ...]
+                        ...}}
+        """
+        self.hdf = h5py.File(file_name, "r")
+        self.batch_sz = batch_sz
+        self.window = window
+        self.batch_type = batch_type
+        self.data_stat = data_stat
 
-    return np.array(features), np.array(labels, dtype=np.int)
+        self.fnames = list(self.hdf.keys())
+        print('Files in dataset: %d' % len(self.fnames))
+
+        if batch_type == "mtag_oversmp" and data_stat:
+            self._files_oversampling()
+
+    def batch(self):
+        """
+        Slice HDF5 datasets and return batch: [smp x bands x frames [x channel]]
+        """
+        if self.batch_type == "seq_slide_wnd":
+            # iterate over datasets until we fill the batch
+            # TODO: see dwt feature extraction to fix 'last' variable here: [Monday]
+            # while 1:
+            cnt = 0
+            X, Y = [], []
+            np.random.shuffle(self.fnames)
+            for ifn, fn in enumerate(self.fnames):
+                dset = np.array(self.hdf[fn], dtype=np.float32)
+                dim, N, ch = dset.shape
+                last = min(N // self.window * self.window, N)
+                for start in xrange(0, last, self.window):
+                    if cnt < self.batch_sz:
+                        X.append(dset[:, start:start + self.window, :])
+                        Y.append(self.hdf[fn].attrs['tag'])
+                        cnt += 1
+                    else:
+                        yield np.array(X), np.array(Y)
+                        cnt = 0
+                        X, Y = [], []
+        elif self.batch_type == "rnd_wnd" or self.batch_type == "mtag_oversmp":
+            cnt = 0
+            X, Y = [], []
+            np.random.shuffle(self.fnames)
+            for ifn, fn in enumerate(self.fnames):
+                if cnt < self.batch_sz:
+                    dset = np.array(self.hdf[fn], dtype=np.float32)
+                    dim, N, ch = dset.shape
+                    start = np.random.randint(0, N - self.window)
+                    X.append(dset[:, start:start + self.window, :])
+                    Y.append(self.hdf[fn].attrs['tag'])
+                    cnt += 1
+                else:
+                    yield np.array(X), np.array(Y)
+                    cnt = 0
+                    X, Y = [], []
+        elif self.batch_type == "stratified":
+            # TODO implement!!!
+            pass
+        elif self.batch_type == "eval":
+            X, Y = [], []
+            for ifn, fn in enumerate(self.fnames):
+                dset = np.array(self.hdf[fn], dtype=np.float32)
+                dim, N, ch = dset.shape
+                last = min(N // self.window * self.window, N)
+                for start in xrange(0, last, self.window):
+                    X.append(dset[:, start:start + self.window, :])
+                    Y.append(self.hdf[fn].attrs['tag'])
+                yield fn, np.array(X), np.array(Y)
+                X, Y = [], []
+        else:
+            raise Exception("There is no such generator type...")
+
+    def batch_shape(self):
+        """
+        return: dimensions of the batch:
+        3D data [batch_sz; band; frame_wnd; channel]
+        2D data [batch_sz; band; frame_wnd]
+        """
+        sh = np.array(self.hdf[self.fnames[0]]).shape
+        if len(sh) == 3:
+            return self.batch_sz, sh[0], self.window, sh[2]
+        if len(sh) == 2:
+            return self.batch_sz, sh[0], self.window
+
+    def stop(self):
+        self.hdf.close()
+
+    def _files_oversampling(self):
+        """
+        Add more rare classes to the file list
+        """
+        # training set data statistic
+        mtag_stat = self.data_stat['train']  # {'tags': [file_names], ...}
+        # TODO check different settings
+        N = int(np.mean(map(len, mtag_stat.values())))  # number of samples to add
+        # sampling files
+        for ts, fs in mtag_stat.items():
+            if ts.lower() == 's': continue
+            if len(fs) < N:
+                add = N - len(fs)
+                c = np.random.choice(fs, add)
+                self.fnames.extend(c)
+        np.random.shuffle(self.fnames)
+
+    def _uniformsmp(self, btch_sz):
+        """
+        Uniformly sample for each class, given tags statistic
+        """
+        # training set data statistic
+        mtag_stat = self.data_stat['train']  # {'tags': [file_names], ...}
+        N = mtag_stat.keys()
+        perC = btch_sz // N
+        if N > btch_sz:
+            print("[info] batch size is smaller than number of classes...")
+        # sampling files
+        btch_fs = []
+        for ts, fs in mtag_stat.items():
+            if ts.lower() == 's': continue
+            c = np.random.choice(fs, perC)
+            btch_fs.append(c)
+        return btch_fs
 
 
-def extract_mfcc_features(parent_dir, sub_dirs, file_ext="*.wav", bands=20, frames=41, add_channel=False):
-    """
-    :return: 3D array (features) and 1D array (labels);
-    feature shape [smp; band; frames]
-    """
-    window_size = 512 * (frames - 1)
-    mfccs = []
-    labels = []
+def do_feature_extraction(ftype, feat_params, parent_dir, sub_dirs, file_ext="*.wav", feat_file='./data/train_set.h5'):
+    fn_lab_pairs = parse_audio(parent_dir, sub_dirs, file_ext)
+    # prepare extractor
+    extractor = F.prepare_extractor(ftype, feat_params)
+    writer = HDFWriter(file_name=feat_file)
+
+    for fn, lab in fn_lab_pairs.items():
+        x, fs = librosa.load(fn)
+        feat = extractor.extract(x, fs)
+        file_id = os.path.basename(fn).split(".")[0] # file name without ext
+        # binary tag
+        tag_id = tag_hot_encoding(lab, 10)
+        # dump features
+        writer.append(file_id, tag_id, feat)
+    writer.close()
+    print("Files processed: %d" % len(fn_lab_pairs))
+
+
+def parse_audio(parent_dir, sub_dirs, file_ext):
+    labels = {}
     for l, sub_dir in enumerate(sub_dirs):
         print("Processing: %s" % l)
         for fn in glob.glob(os.path.join(parent_dir, sub_dir, file_ext)):
             print("%s" % fn)
-            sound_clip, s = librosa.load(fn)
-            label = fn.split('/')[-1].split('-')[1]
-            for (start, end) in windows(sound_clip, window_size):
-                if (len(sound_clip[start:end]) == window_size):
-                    signal = sound_clip[start:end]
-                    mfcc = librosa.feature.mfcc(y=signal, sr=s, n_mfcc=bands) # [bands; frames]
-                    mfcc = mfcc.flatten()[:, np.newaxis].T
-                    mfccs.append(mfcc)
-                    labels.append(label)
-    features = np.asarray(mfccs)
-    if K.image_dim_ordering() == 'th' and add_channel:
-        features = features.reshape(len(mfccs), 1, bands, frames)
-        print("Data shape: ", features.shape)
-    elif K.image_dim_ordering() == 'tf' and add_channel:
-        features = features.reshape(len(mfccs), bands, frames, 1)
-        print("Data shape: ", features.shape)
-    else:
-        features = features.reshape(len(mfccs), bands, frames)
-    return features, labels #np.array(labels, dtype=np.int)
+            labels[fn] = int(fn.split('/')[-1].split('-')[1])
+    return labels
 
 
-def windows(data, window_size):
+def tag_hot_encoding(tag, n_tags):
     """
-    Return chunk of sound wave signal
-    data: 1D array wave signal
-    window_size: wave chunk length
-    """
-    start = 0
-    while start < len(data):
-        yield start, start + window_size
-        start += (window_size / 2)
-
-
-def one_hot_encode(labels):
-    n_labels = len(labels)
-    n_unique_labels = len(np.unique(labels))
-    one_hot = np.zeros((n_labels, n_unique_labels))
-    one_hot[np.arange(n_labels), labels] = 1
-    return one_hot
+    tag: integer label
+    Return a unit vector (dim = # of tags) with a 1.0 in the jth
+    position of the tag and zeroes elsewhere"""
+    hots = np.zeros(n_tags, dtype=np.uint8)
+    hots[tag] = 1
+    return hots

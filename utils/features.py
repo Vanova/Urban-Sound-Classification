@@ -4,7 +4,9 @@ from scipy import signal
 from pywt import wavedec
 import librosa
 
-MFCC_CNF = {
+MFCC = {
+    'win_length_seconds': 0.025, #def: 0.04
+    'hop_length_seconds': 0.01, #def: 0.02
     'include_mfcc0': False,
     'include_delta': False,
     'include_acceleration': False,
@@ -16,6 +18,21 @@ MFCC_CNF = {
     'fmax': 8000,  # def: 24000     # Maximum frequency when constructing MEL band
     'mfcc_delta': {'width': 9},
     'mfcc_acceleration': {'width': 9}
+}
+
+FBANK = {
+    'win_length_seconds': 0.025,
+    'hop_length_seconds': 0.01,
+    'bands': 64,
+    'fmin': 0,                     # Minimum frequency when constructing MEL bands
+    'fmax': 8000,   # def: 24000   # Maximum frequency when constructing MEL band
+    'include_delta': False,
+    'include_acceleration': False,
+    'multichannel': True,          # static, delta and delta-delta stack as RGB channels
+    'delta': {'width': 15},
+    'acceleration': {'width': 15},
+    'n_fft': 1024,
+    'window': 'hamming_asymmetric'  # [hann_asymmetric, hamming_asymmetric]
 }
 
 
@@ -76,18 +93,20 @@ class MFCCBaseExtractor(BaseExtractor):
         x: wave 1D signal
         return: 2D array, [frames; dimension]
         """
+        wnd_len = int(self.params['win_length_seconds'] * smp_rate)
+        hop_len = int(self.params['hop_length_seconds'] * smp_rate)
         # Extract features, Mel Frequency Cepstral Coefficients
         wnd = self._window(wtype=self.params['window'], smp_sz=self.params['n_fft'])
         # calculate static mfss coefficients
-        stft = np.abs(librosa.stft(x + self.eps, n_fft=self.params['n_fft'], win_length=self.params['win_length'],
-                                   hop_length=self.params['hop_length'], window=wnd)) ** 2
+        stft = np.abs(librosa.stft(x + self.eps, n_fft=self.params['n_fft'], win_length=wnd_len,
+                                   hop_length=hop_len, window=wnd)) ** 2
 
         mel_basis = librosa.filters.mel(sr=smp_rate, n_fft=self.params['n_fft'], n_mels=self.params['n_mels'],
-                                        fmin=self.params['fmin'], fmax=self.params['fmax'], htk=self.params['htk'])
+                                        fmin=self.params['fmin'], fmax=self.params['fmax'])
         stft_windowed = np.dot(mel_basis, stft)
         mfcc = librosa.feature.mfcc(S=librosa.logamplitude(stft_windowed))
 
-        emfcc = mfcc[:, :, np.newaxis]  # np.expand_dims(logmel, axis=2)
+        emfcc = mfcc[:, :, np.newaxis]
         sh = emfcc.shape
         # consider delta features as the 2nd "image" channel
         if self.params['include_delta']:
@@ -118,14 +137,16 @@ class FbankBaseExtractor(BaseExtractor):
         """
         return: 3D array, features [bands; frames; channels]
         """
+        wnd_len = int(self.params['win_length_seconds'] * smp_rate)
+        hop_len = int(self.params['hop_length_seconds'] * smp_rate)
         # Extract features, Mel Frequency Cepstral Coefficients
         wnd = self._window(wtype=self.params['window'], smp_sz=self.params['n_fft'])
         # calculate static mfss coefficients
-        stft = np.abs(librosa.stft(x + self.eps, n_fft=self.params['n_fft'], win_length=self.params['win_length'],
-                                   hop_length=self.params['hop_length'], window=wnd)) ** 2
+        stft = np.abs(librosa.stft(x + self.eps, n_fft=self.params['n_fft'], win_length=wnd_len,
+                                   hop_length=hop_len, window=wnd)) ** 2
 
         mel_basis = librosa.filters.mel(sr=smp_rate, n_fft=self.params['n_fft'], n_mels=self.params['bands'],
-                                        fmin=self.params['fmin'], fmax=self.params['fmax'], htk=self.params['htk'])
+                                        fmin=self.params['fmin'], fmax=self.params['fmax'])
         melspec = np.dot(mel_basis, stft)
         logmel = librosa.logamplitude(melspec)
         elogmel = logmel[:, :, np.newaxis]  # np.expand_dims(logmel, axis=2)
@@ -151,11 +172,13 @@ class STFTBaseExtractor(BaseExtractor):
         """
         return: 3D array, features [bands; frames; channels] for Tensorflow
         """
+        wnd_len = int(self.params['win_length_seconds'] * smp_rate)
+        hop_len = int(self.params['hop_length_seconds'] * smp_rate)
         # Extract features, Mel Frequency Cepstral Coefficients
         wnd = self._window(wtype=self.params['window'], smp_sz=self.params['n_fft'])
         # calculate static mfss coefficients
-        stft = np.abs(librosa.stft(x + self.eps, n_fft=self.params['n_fft'], win_length=self.params['win_length'],
-                                   hop_length=self.params['hop_length'], window=wnd)) ** 2
+        stft = np.abs(librosa.stft(x + self.eps, n_fft=self.params['n_fft'], win_length=wnd_len,
+                                   hop_length=hop_len, window=wnd)) ** 2
         estft = np.expand_dims(stft, axis=2)
         sh = estft.shape
         # consider delta features as the 2nd "image" channel
