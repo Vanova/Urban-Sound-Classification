@@ -4,8 +4,7 @@ import utils.urban_loader as uld
 import tester as TST
 
 
-def do_nn_train(model, train_gen, test_gen, cls_params, model_file=None):
-
+def do_nn_train(model, train_gen, test_gen, cls_params, model_path=None):
     tr_hist, tst_hist, acc_hist = [], [], []
     for ep in xrange(cls_params['n_epoch']):
         print("Epoch %d" % ep)
@@ -19,15 +18,14 @@ def do_nn_train(model, train_gen, test_gen, cls_params, model_file=None):
         # ===
         # evaluate on test data, every epoch
         # ===
-        tst_loss, tst_acc = TST.evaluate(model, test_gen, cls_params['frames'])
-        # tst_hist.append(tst_loss)
-        # acc_hist.append(tst_acc)
+        tst_loss, tst_acc = TST.evaluate(model, test_gen)
+        tst_hist.append(tst_loss)
+        acc_hist.append(tst_acc)
         print('Train loss: %.4f' % tr_hist[-1])
-        # print('Test loss: %.4f' % tst_hist[-1])
-        # print('Test Acc: %.4f' % acc_hist[-1])
-    # close generators
-    train_gen.stop()
+        print('Test loss: %.4f' % tst_hist[-1])
+        print('Test Acc: %.4f' % acc_hist[-1])
     # serialize model to HDF5
+    model_file = os.path.join(model_path, 'crnn_%.4f_%.4f.h5' % (tst_hist[-1], acc_hist[-1]))
     model.save(model_file)
-    plot(model, to_file=os.path.join('./data/model/', "model_graph.png"), show_shapes=True)
+    plot(model, to_file=os.path.join(model_path, "model_graph.png"), show_shapes=True)
     # return tr_hist, tst_hist, peer_hist, eer_hist, best_model_name

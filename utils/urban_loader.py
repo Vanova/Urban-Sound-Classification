@@ -144,10 +144,13 @@ class MiniBatchGenerator(object):
                 dset = np.array(self.hdf[fn], dtype=np.float32)
                 dim, N, ch = dset.shape
                 last = min(N // self.window * self.window, N)
-                for start in xrange(0, last, self.window):
-                    X.append(dset[:, start:start + self.window, :])
-                    Y.append(self.hdf[fn].attrs['tag'])
-                yield fn, np.array(X), np.array(Y)
+                if last == 0:
+                    print("[INFO] file %s shorter than frame context: %d" % (fn, N))
+                else:
+                    for start in xrange(0, last, self.window):
+                        X.append(dset[:, start:start + self.window, :])
+                        Y.append(self.hdf[fn].attrs['tag'])
+                    yield fn, np.array(X), np.array(Y)
                 X, Y = [], []
         else:
             raise Exception("There is no such generator type...")
@@ -217,6 +220,7 @@ def do_feature_extraction(ftype, feat_params, parent_dir, sub_dirs, file_ext="*.
         tag_id = tag_hot_encoding(lab, 10)
         # dump features
         writer.append(file_id, tag_id, feat)
+        print("Processed: %s" % fn)
     writer.close()
     print("Files processed: %d" % len(fn_lab_pairs))
 
@@ -226,7 +230,7 @@ def parse_audio(parent_dir, sub_dirs, file_ext):
     for l, sub_dir in enumerate(sub_dirs):
         print("Processing: %s" % l)
         for fn in glob.glob(os.path.join(parent_dir, sub_dir, file_ext)):
-            print("%s" % fn)
+            # print("%s" % fn)
             labels[fn] = int(fn.split('/')[-1].split('-')[1])
     return labels
 

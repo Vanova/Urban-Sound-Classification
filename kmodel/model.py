@@ -164,28 +164,28 @@ def audio_crnn(params, input_shape, nclass, include_top=True):
     x = BatchNormalization(axis=freq_axis, name='bn_0_freq')(feat_input)
 
     # Conv block 1
-    x = Convolution2D(64, 3, 3, border_mode='same', name='conv1')(x)
+    x = Convolution2D(32, 3, 3, border_mode='same', name='conv1')(x)
     x = BatchNormalization(axis=channel_axis, mode=0, name='bn1')(x)
     x = ELU()(x)
     x = MaxPooling2D(pool_size=(2, 2), strides=(2, 2), name='pool1')(x) # (20, 50, 64)
     x = Dropout(0.1, name='dropout1')(x)
 
     # Conv block 2
-    x = Convolution2D(128, 3, 3, border_mode='same', name='conv2')(x)
+    x = Convolution2D(64, 3, 3, border_mode='same', name='conv2')(x)
     x = BatchNormalization(axis=channel_axis, mode=0, name='bn2')(x)
     x = ELU()(x)
     x = MaxPooling2D(pool_size=(3, 2), strides=(3, 2), name='pool2')(x)
     x = Dropout(0.1, name='dropout2')(x)
 
     # Conv block 3
-    x = Convolution2D(128, 3, 3, border_mode='same', name='conv3')(x)
+    x = Convolution2D(64, 3, 3, border_mode='same', name='conv3')(x)
     x = BatchNormalization(axis=channel_axis, mode=0, name='bn3')(x)
     x = ELU()(x)
     x = MaxPooling2D(pool_size=(4, 2), strides=(4, 2), name='pool3')(x)
     x = Dropout(0.1, name='dropout3')(x)
 
     # Conv block 4
-    x = Convolution2D(128, 3, 3, border_mode='same', name='conv4')(x)
+    x = Convolution2D(64, 3, 3, border_mode='same', name='conv4')(x)
     x = BatchNormalization(axis=channel_axis, mode=0, name='bn4')(x)
     x = ELU()(x)
     x = MaxPooling2D(pool_size=(2, 1), strides=(2, 1), name='pool4')(x)
@@ -196,7 +196,7 @@ def audio_crnn(params, input_shape, nclass, include_top=True):
         x = Permute((3, 1, 2))(x)
     # do convolutions, until all freqs shrink to one
     # x = Reshape((-1, 128))(x) # TODO check
-    x = Reshape((10, 128))(x)
+    x = Reshape((10, 64))(x)
 
     # GRU block 1, 2, output
     x = GRU(32, return_sequences=True, name='gru1')(x)

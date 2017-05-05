@@ -3,15 +3,15 @@ import numpy as np
 
 def evaluate(model, test_gen, metrics=['accuracy']):
     # calc evaluation scores
-    # tags = dataset.audio_tags
-    # eval_scores, fix_scores = [], []
     loss, acc, cnt = 0, 0, 0
     for tst_file, X_tst_b, Y_tst_b in test_gen.batch():
-        loss += model.test_on_batch(X_tst_b, Y_tst_b)
-        acc += model.evaluate_on_batch(X_tst_b, Y_tst_b, with_drop=False)
+        l = model.test_on_batch(X_tst_b, Y_tst_b)
+        loss += l[0]
+        acc += l[1]
         cnt += 1
-    print(loss / cnt)
-    print(acc / cnt)
+    avg_loss = loss / cnt
+    avg_acc = acc / cnt
+    return avg_loss, avg_acc
 
         # ps = model.predict_on_batch(X_tst_b)
         # average scores across sequential chunks from utterance
