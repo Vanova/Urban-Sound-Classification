@@ -18,10 +18,10 @@ NN_PARAM = {
             'batch': 50,
             'batch_type': 'seq_slide_wnd',  # mtag_oversmp, rnd_wnd, seq_slide_wnd
             'dropout': 0.5,
-            'feature_maps': [32],
+            'feature_maps': 32,
             'frames': 80,                   # number of spliced frames, i.e. frame context
             'loss': 'mse',       # mfom_eer_uvz, mfom_eer_ovo, mfom_eer_uvz, mse, categorical_crossentropy
-            'n_epoch': 1,
+            'n_epoch': 3,
             'out_dim': 10
             }
 

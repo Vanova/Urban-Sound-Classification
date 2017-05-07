@@ -5,6 +5,7 @@ import numpy as np
 import keras.backend as K
 import h5py
 import features as F
+
 np.random.seed(777)
 
 
@@ -12,6 +13,7 @@ class HDFWriter(object):
     """
     Save audio features in single hdf5 file storage
     """
+
     def __init__(self, file_name):
         self.hdf = h5py.File(file_name, "w")
 
@@ -116,7 +118,12 @@ class MiniBatchGenerator(object):
                         Y.append(self.hdf[fn].attrs['tag'])
                         cnt += 1
                     else:
-                        yield np.array(X), np.array(Y)
+                        if K.image_dim_ordering() == 'th': # permute
+                            X = np.array(X)
+                            X = np.transpose(X, (0, 3, 1, 2))
+                            Y = np.array(Y)
+                            Y = Y[:, np.newaxis, :]
+                        yield X, Y
                         cnt = 0
                         X, Y = [], []
         elif self.batch_type == "rnd_wnd" or self.batch_type == "mtag_oversmp":
@@ -150,22 +157,40 @@ class MiniBatchGenerator(object):
                     for start in xrange(0, last, self.window):
                         X.append(dset[:, start:start + self.window, :])
                         Y.append(self.hdf[fn].attrs['tag'])
-                    yield fn, np.array(X), np.array(Y)
+                    if K.image_dim_ordering() == 'th':  # permute
+                        X = np.array(X)
+                        X = np.transpose(X, (0, 3, 1, 2))
+                        Y = np.array(Y)
+                        Y = Y[:, np.newaxis, :]
+                    yield fn, X, Y
                 X, Y = [], []
         else:
             raise Exception("There is no such generator type...")
 
     def batch_shape(self):
         """
-        return: dimensions of the batch:
-        3D data [batch_sz; band; frame_wnd; channel]
-        2D data [batch_sz; band; frame_wnd]
+        NOTE: dataset always is in Tensorflow order initially [bands, frames, channels]
+        :return:
+            Tensorflow:
+                3D data [batch_sz; band; frame_wnd; channel]
+                2D data [batch_sz; band; frame_wnd]
+            Theano:
+                3D data [batch_sz; channel; band; frame_wnd]
+                2D data [batch_sz; band; frame_wnd] ? check
         """
         sh = np.array(self.hdf[self.fnames[0]]).shape
         if len(sh) == 3:
-            return self.batch_sz, sh[0], self.window, sh[2]
+            bands, _, channels = sh
+            assert channels >= 1
+            if K.image_dim_ordering() == 'th':
+                # [batch_sz; channel; band; frame_wnd]
+                return self.batch_sz, channels, bands, self.window
+            else:
+                # [batch_sz; band; frame_wnd; channel]
+                return self.batch_sz, bands, self.window, channels
         if len(sh) == 2:
-            return self.batch_sz, sh[0], self.window
+            bands, _ = sh
+            return self.batch_sz, bands, self.window
 
     def stop(self):
         self.hdf.close()
@@ -215,7 +240,7 @@ def do_feature_extraction(ftype, feat_params, parent_dir, sub_dirs, file_ext="*.
     for fn, lab in fn_lab_pairs.items():
         x, fs = librosa.load(fn)
         feat = extractor.extract(x, fs)
-        file_id = os.path.basename(fn).split(".")[0] # file name without ext
+        file_id = os.path.basename(fn).split(".")[0]  # file name without ext
         # binary tag
         tag_id = tag_hot_encoding(lab, 10)
         # dump features

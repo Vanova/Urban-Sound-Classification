@@ -29,3 +29,10 @@ def do_nn_train(model, train_gen, test_gen, cls_params, model_path=None):
     model.save(model_file)
     plot(model, to_file=os.path.join(model_path, "model_graph.png"), show_shapes=True)
     # return tr_hist, tst_hist, peer_hist, eer_hist, best_model_name
+
+
+def do_train_fitgen(model, train_gen, test_gen, cls_params, model_path=None):
+    """
+    Train with fit_generator and callbacks
+    """
+    pass
