@@ -118,10 +118,10 @@ class MiniBatchGenerator(object):
                         Y.append(self.hdf[fn].attrs['tag'])
                         cnt += 1
                     else:
+                        X = np.array(X)
+                        Y = np.array(Y)
                         if K.image_dim_ordering() == 'th': # permute
-                            X = np.array(X)
                             X = np.transpose(X, (0, 3, 1, 2))
-                            Y = np.array(Y)
                             Y = Y[:, np.newaxis, :]
                         yield X, Y
                         cnt = 0
@@ -157,10 +157,10 @@ class MiniBatchGenerator(object):
                     for start in xrange(0, last, self.window):
                         X.append(dset[:, start:start + self.window, :])
                         Y.append(self.hdf[fn].attrs['tag'])
+                    X = np.array(X)
+                    Y = np.array(Y)
                     if K.image_dim_ordering() == 'th':  # permute
-                        X = np.array(X)
                         X = np.transpose(X, (0, 3, 1, 2))
-                        Y = np.array(Y)
                         Y = Y[:, np.newaxis, :]
                     yield fn, X, Y
                 X, Y = [], []

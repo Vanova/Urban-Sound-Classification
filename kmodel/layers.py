@@ -1,3 +1,6 @@
+"""
+TODO: finish implementation
+"""
 from recurrentshop import LSTMCell, RecurrentContainer
 
 

@@ -1,5 +1,7 @@
 '''
 Reference: [Music-auto_tagging-keras](https://github.com/keunwoochoi/music-auto_tagging-keras)
+Note: to make attention work install seq2seq and
+recurrentShop library, see working versions on my github repository
 '''
 from keras import backend as K
 from keras.models import Model, Sequential
@@ -109,10 +111,10 @@ def audio_crnn(params, input_shape, nclass, include_top=True):
 
 def cnn_rnn_attention(params, input_shape, nclass, include_top=True):
     """
-        The CNN dim equation: (width - kernel_size + 2*pad)/stride +1
-        input shape: [batch_sz; band; frame_wnd; channel]
-        Based on idea from [Music-auto_tagging-keras](https://github.com/keunwoochoi/music-auto_tagging-keras)
-        """
+    The CNN dim equation: (width - kernel_size + 2*pad)/stride +1
+    input shape: [batch_sz; band; frame_wnd; channel]
+    Based on idea from [Music-auto_tagging-keras](https://github.com/keunwoochoi/music-auto_tagging-keras)
+    """
     # determine proper input shape
     print("DNN input shape", input_shape)
     if K.image_dim_ordering() == 'th':
@@ -178,7 +180,7 @@ def cnn_rnn_attention(params, input_shape, nclass, include_top=True):
     # Create attention model
     input_length = 20
     input_dim = 2 * params['feature_maps']
-    att_model = AttentionSeq2Seq(output_dim=32, output_length=1, input_shape=(input_length, input_dim), bidirectional=False)
+    att_model = AttentionSeq2Seq(output_dim=32, output_length=1, input_shape=(input_length, input_dim), bidirectional=True)
     # merge models
     full_model = Sequential()
     full_model.add(init_model)

@@ -26,6 +26,10 @@ train_gen = uld.MiniBatchGenerator(cnf.TRAIN_FEAT, cnf.NN_PARAM['frames'],
 test_gen = uld.MiniBatchGenerator(cnf.TEST_FEAT, cnf.NN_PARAM['frames'],
                                    cnf.NN_PARAM['batch'], batch_type='eval')
 
+# Acc = 0.2726
+# nn = model.audio_crnn(cnf.NN_PARAM, nclass=cnf.NN_PARAM['out_dim'], input_shape=train_gen.batch_shape())
+# Acc = 0.2629, epochs=3
+# Acc = 0.3379
 nn = model.cnn_rnn_attention(cnf.NN_PARAM, nclass=cnf.NN_PARAM['out_dim'], input_shape=train_gen.batch_shape())
 TR.do_nn_train(nn, train_gen, test_gen, cnf.NN_PARAM, cnf.NN_MODEL_PATH)
 train_gen.stop()

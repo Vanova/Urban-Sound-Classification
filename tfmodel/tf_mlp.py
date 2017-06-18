@@ -6,11 +6,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 from sklearn.metrics import precision_recall_fscore_support
-
 import utils.visialiser as vis
-from utils import urban_loader
+from old.features import parse_audio_files, one_hot_encode
 
-DATASET_BASE_PATH = '/home/vano/wrkdir/Datasets/UrbanSound8K/audio/'
+DATASET_BASE_PATH = '/home/vano/wrkdir/datasets/UrbanSound8K/audio/'
 
 
 def vis_examp():
@@ -33,17 +32,17 @@ def vis_examp():
 # TODO saving to hdf5!!!
 tr_sub_dirs = ['fold1_dwnsmp', 'fold2_dwnsmp']
 ts_sub_dirs = ['fold3_dwnsmp']
-tr_features, tr_labels = urban_loader.parse_audio_files(DATASET_BASE_PATH, tr_sub_dirs)
-ts_features, ts_labels = urban_loader.parse_audio_files(DATASET_BASE_PATH, ts_sub_dirs)
+tr_features, tr_labels = parse_audio_files(DATASET_BASE_PATH, tr_sub_dirs)
+ts_features, ts_labels = parse_audio_files(DATASET_BASE_PATH, ts_sub_dirs)
 
-tr_labels = urban_loader.one_hot_encode(tr_labels)
-ts_labels = urban_loader.one_hot_encode(ts_labels)
+tr_labels = one_hot_encode(tr_labels)
+ts_labels = one_hot_encode(ts_labels)
 
 ###
 # Training
 ###
 # network settings
-training_epochs = 5000
+training_epochs = 10
 n_dim = tr_features.shape[1]
 n_classes = 10
 n_hidden_units_one = 280
@@ -70,9 +69,11 @@ y_ = tf.nn.softmax(tf.matmul(h_2, W) + b)
 init = tf.global_variables_initializer()
 
 # Xentropy cost function
-cost_function = tf.reduce_mean(-tf.reduce_sum(Y * tf.log(y_), reduction_indices=[1]))
+_EPSILON = 1e-7
+y_ = tf.clip_by_value(y_, _EPSILON, 1.0 - _EPSILON)
+cost_function = tf.reduce_mean(-tf.reduce_sum(Y * tf.log(y_), axis=1)) # reduction_indices=[1] axis=1
 optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost_function)
-
+# TODO use this in DCASE
 correct_prediction = tf.equal(tf.argmax(y_, 1), tf.argmax(Y, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 

@@ -63,6 +63,21 @@ def plot_log_power_specgram(sound_names, raw_sounds):
     plt.suptitle('Figure 3: Log power spectrogram', x=0.5, y=0.915, fontsize=18)
     plt.show()
 
+
+class KNetworkVisualizer(object):
+    """
+    Keras networks visualizer
+    """
+
+    def __init__(self):
+        pass
+
+    def plot_filters(self):
+        pass
+
+    def plot_activations(self, input):
+        pass
+
 if __name__ == '__main__':
     DATASET_PATH = "/home/vano/wrkdir/Datasets/UrbanSound8K/audio/fold1_dwnsmp/"
 
