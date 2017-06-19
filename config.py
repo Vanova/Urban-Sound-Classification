@@ -11,6 +11,7 @@ TRAIN_FEAT = path.join(FEAT_PATH, 'train_set.h5')
 TEST_FEAT = path.join(FEAT_PATH, 'test_set.h5')
 
 NN_MODEL_PATH = path.join(FEAT_PATH, 'model')
+NN_FNAME = 'crnn'
 NN_PARAM = {
             'activations': ['elu', 'elu', 'elu', 'elu', 'sigmoid'],
             'optimizer': 'adam',
