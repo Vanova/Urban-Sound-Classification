@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 from sklearn.metrics import precision_recall_fscore_support
+
+import utils.urban_loader
 import utils.visialiser as vis
 from old.features import parse_audio_files, one_hot_encode
 
@@ -18,7 +20,7 @@ def vis_examp():
     sound_names = ["air conditioner", "car horn", "children playing"]
     # add dataset path to file names
     sound_file_paths = [DATASET_PATH + p for p in sound_file_paths]
-    raw_sounds = vis.load_sound_files(sound_file_paths)
+    raw_sounds = utils.urban_loader.load_sound_files(sound_file_paths)
     # visualise different features
     vis.plot_waves(sound_names, raw_sounds)
     vis.plot_specgram(sound_names, raw_sounds)

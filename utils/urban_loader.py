@@ -268,3 +268,11 @@ def tag_hot_encoding(tag, n_tags):
     hots = np.zeros(n_tags, dtype=np.uint8)
     hots[tag] = 1
     return hots
+
+
+def load_sound_files(file_paths):
+    raw_sounds = []
+    for fp in file_paths:
+        X, sr = librosa.load(fp, sr=22050)
+        raw_sounds.append(X)
+    return raw_sounds

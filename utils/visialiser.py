@@ -1,7 +1,9 @@
 import librosa
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.pyplot import specgram
+
+from utils.urban_loader import load_sound_files
 
 plt.style.use('ggplot')
 plt.rcParams['font.family'] = 'serif'
@@ -15,13 +17,6 @@ plt.rcParams['xtick.labelsize'] = 10
 plt.rcParams['ytick.labelsize'] = 10
 plt.rcParams['legend.fontsize'] = 11
 plt.rcParams['figure.titlesize'] = 13
-
-def load_sound_files(file_paths):
-    raw_sounds = []
-    for fp in file_paths:
-        X, sr = librosa.load(fp, sr=22050)
-        raw_sounds.append(X)
-    return raw_sounds
 
 
 def plot_waves(sound_names, raw_sounds):
@@ -69,7 +64,7 @@ class KNetworkVisualizer(object):
     Keras networks visualizer
     """
 
-    def __init__(self):
+    def __init__(self, ):
         pass
 
     def plot_filters(self):
@@ -77,6 +72,9 @@ class KNetworkVisualizer(object):
 
     def plot_activations(self, input):
         pass
+
+
+
 
 if __name__ == '__main__':
     DATASET_PATH = "/home/vano/wrkdir/Datasets/UrbanSound8K/audio/fold1_dwnsmp/"

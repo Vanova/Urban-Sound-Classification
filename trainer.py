@@ -4,7 +4,7 @@ import utils.urban_loader as uld
 import tester as TST
 
 
-def do_nn_train(model, train_gen, test_gen, cls_params, model_path=None):
+def do_nn_train(model, train_gen, test_gen, cls_params, model_path=None, model_fname=None):
     tr_hist, tst_hist, acc_hist = [], [], []
     for ep in xrange(cls_params['n_epoch']):
         print("Epoch %d" % ep)
@@ -25,13 +25,13 @@ def do_nn_train(model, train_gen, test_gen, cls_params, model_path=None):
         print('Test loss: %.4f' % tst_hist[-1])
         print('Test Acc: %.4f' % acc_hist[-1])
     # serialize model to HDF5
-    model_file = os.path.join(model_path, 'crnn_%.4f_%.4f.h5' % (tst_hist[-1], acc_hist[-1]))
+    model_file = os.path.join(model_path, model_fname + '_%.4f_%.4f.h5' % (tst_hist[-1], acc_hist[-1]))
     model.save(model_file)
     plot(model, to_file=os.path.join(model_path, "model_graph.png"), show_shapes=True)
     # return tr_hist, tst_hist, peer_hist, eer_hist, best_model_name
 
 
-def do_train_fitgen(model, train_gen, test_gen, cls_params, model_path=None):
+def do_train_fitgen(model, train_gen, test_gen, cls_params, model_path=None, model_fname=None):
     """
     Train with fit_generator and callbacks
     """
