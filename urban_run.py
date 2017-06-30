@@ -4,9 +4,9 @@ Ref.: https://github.com/Vanova/music-auto_tagging-keras
 import os
 import os.path as path
 import matplotlib.pyplot as plt
+import keras
 import numpy as np
 import config as cnf
-from keras import models
 from keras.models import load_model
 import kmodel.model as urb_ml
 import utils.urban_loader as urb_ld
@@ -45,8 +45,6 @@ if not any(f.startswith(cnf.NN_FNAME) for f in os.listdir(cnf.NN_MODEL_PATH)) or
     train_gen.stop()
     test_gen.stop()
 
-# visual = vis.KNetworkVisualizer(nn)
-# visual.plot_activations(batched_file=, lname='')
 
 # load network model
 nn = load_model(path.join(cnf.NN_MODEL_PATH, 'crnn_0.0820_0.3483.h5'))
@@ -55,24 +53,19 @@ nn.summary()
 # ===
 # prepare data to visualize
 # ===
+# TODO return batch from audio file name
 # load one batch of data
 test_gen = urb_ld.MiniBatchGenerator(cnf.TEST_FEAT, cnf.NN_PARAM['frames'],
                                        cnf.NN_PARAM['batch'], batch_type='eval')
-# TODO return batch from audio file name
 tst_file, X_tst_b, Y_tst_b = test_gen.batch().next()
 
-
-# TODO pick layer to visualize by name
-# Extracts the outputs of the top 8 layers:
-layer_outputs = [layer.output for layer in nn.layers[:8]]
-# Creates a model that will return these outputs, given the model input:
-activation_nn = models.Model(input=nn.input, output=layer_outputs)
-activations = activation_nn.predict_on_batch(X_tst_b)
-
-
-first_layer_activation = activations[0]
-print(first_layer_activation.shape)
-plt.imshow(first_layer_activation[0, :, :, 0])
-# plt.axis('off')
-plt.grid(False)
-plt.show()
+# prepare visualiser
+visual = vis.KNetworkVisualizer(nn)
+for id, layer in enumerate(nn.layers):
+    if vis.KNetworkVisualizer.is_visualizable(layer):
+    # if isinstance(layer, keras.layers.Conv2D) or isinstance(layer, keras.layers.MaxPooling2D) or \
+    #         isinstance(layer, keras.layers.AveragePooling2D) or isinstance(layer, keras.layers.InputLayer) or \
+    #         isinstance(layer, keras.layers.Dense):
+        visual.layer_activations(batch=X_tst_b, lname=nn.layers[id].name)
+# visual.layer_activations(batch=X_tst_b, lname=nn.layers[0].name)
+# visual.all_activations(batch=X_tst_b)

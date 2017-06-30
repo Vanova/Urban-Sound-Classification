@@ -45,19 +45,29 @@ class HDFWriter(object):
         return np.array(X), np.array(Y)
 
 
-# def batch_handler(type):
-#     if type == "seq_slide_wnd":
-#         pass
-#     elif type == "rnd_wnd":
-#         pass
-#     elif type == "eval":
-#         pass
-#     elif type == "mtag_oversmp":
-#         pass
-#     elif type == "stag_oversmp":
-#         pass
-#     else:
-#         raise ValueError("Unknown batch type [" + type + "]")
+def batch_handler(file_name, window, batch_sz=1, batch_type="seq_slide_wnd", data_stat=None):
+    if type == "seq_slide_wnd":
+        pass
+    elif type == "rnd_wnd":
+        pass
+    elif type == "eval":
+        pass
+    elif type == "mtag_oversmp":
+        pass
+    elif type == "stag_oversmp":
+        pass
+    else:
+        raise ValueError("Unknown batch type [" + type + "]")
+
+
+class BaseGenerator(object):
+
+    def __init__(self):
+        pass
+
+
+class SequentialBatchGenerator():
+    pass
 
 
 class MiniBatchGenerator(object):
